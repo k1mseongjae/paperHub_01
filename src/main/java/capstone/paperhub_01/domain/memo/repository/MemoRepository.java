@@ -11,4 +11,5 @@ public interface MemoRepository extends JpaRepository<Memo, Long> {
 
     List<Memo> findByAnchorIdIn(List<Long> anchorIds);
 
+    void deleteAllByAnchor_Id(Long anchorId);
 }

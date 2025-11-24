@@ -24,6 +24,7 @@ public class HighlightService {
     private final UserPaperStatsService userPaperStatsService;
     private final MemberRepository memberRepository;
     private final PaperRepository paperRepository;
+    private final capstone.paperhub_01.domain.memo.repository.MemoRepository memoRepository;
 
     @Transactional
     public Highlight create(HighlightCreateReq req, String createdBy) {
@@ -36,7 +37,7 @@ public class HighlightService {
                 req.getPrefix(),
                 req.getSuffix(),
                 req.getSignature(), createdBy
-        );
+            );
 
         // 2) Highlight 생성 (앵커 참조)
         var h = new Highlight();
@@ -46,7 +47,8 @@ public class HighlightService {
         h.setColor(req.getColor());
         h.setCreatedBy(createdBy);
         var now = OffsetDateTime.now();
-        h.setCreatedAt(now); h.setUpdatedAt(now);
+        h.setCreatedAt(now);
+        h.setUpdatedAt(now);
 
         Highlight saved = highlightRepository.save(h);
 
@@ -62,7 +64,7 @@ public class HighlightService {
         userPaperStatsService.addHighlight(memberId, paperId);
 
         return saved;
-
+        
 
         //return highlightRepository.save(h);
     }
@@ -77,8 +79,12 @@ public class HighlightService {
 
         highlightRepository.delete(h);
 
-        boolean noHighlights = highlightRepository.countByAnchor_Id(anchorId) > 0;
+        boolean noHighlights = highlightRepository.countByAnchor_Id(anchorId) == 0;
+
         if (noHighlights) {
+            // Cascade delete: Delete all memos associated with this anchor
+            memoRepository.deleteAllByAnchor_Id(anchorId);
+            // Delete the anchor
             anchorRepository.deleteById(anchorId);
         }
 

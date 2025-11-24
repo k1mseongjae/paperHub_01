@@ -31,7 +31,7 @@ public class MemoService {
     @Transactional
     public Memo create(MemoCreateReq req, Long memberId) {
         var anchor = anchorRepository.findById(req.getAnchorId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.ANCHOR_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANCHOR_NOT_FOUND));
 
         var m = new Memo();
         m.setAnchor(anchor);
@@ -78,7 +78,14 @@ public class MemoService {
 
     @Transactional
     public MemoDeleteResp delete(Long id, String requester) {
-        memoRepository.deleteById(id);
+        Memo memo = memoRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMO_NOT_FOUND));
+
+        if (!requester.equals(memo.getCreatedBy())) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND); // or FORBIDDEN
+        }
+
+        memoRepository.delete(memo);
         return new MemoDeleteResp(id);
     }
 
@@ -103,6 +110,7 @@ public class MemoService {
             return new MemoEditResp(memo);
         }
 
+        memo.setBody(newBody);
         memo.setUpdatedAt(OffsetDateTime.now());
 
         return new MemoEditResp(memo);
